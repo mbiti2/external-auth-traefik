@@ -1,48 +1,45 @@
 networks:
   app-network:
-    driver: bridge # This network will be created by this compose file
+    driver: bridge
 
 services:
-
-  # Keycloak Identity and Access Management
   keycloak:
     image: quay.io/keycloak/keycloak:latest
     container_name: keycloak
-    command: start-dev # Run in development mode (DO NOT USE IN PRODUCTION)
+    command: start-dev 
     environment:
       KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN_USER}
       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
       KC_DB: postgres
-      KC_DB_URL_HOST: keycloak-db # Internal service name for the database
+      KC_DB_URL_HOST: keycloak-db
       KC_DB_URL_DATABASE: ${POSTGRES_DB}
       KC_DB_USERNAME: ${POSTGRES_USER}
       KC_DB_PASSWORD: ${POSTGRES_PASSWORD}
       KC_HOSTNAME: 10.216.68.222
       KC_HOSTNAME_PORT: 7000
       KC_HOSTNAME_URL: http://10.216.68.222:7000
-      KC_PROXY_HEADERS: forwarded # Internal service name for internal communication
+      KC_PROXY_HEADERS: forwarded
       KC_HTTP_ENABLED: true
       KC_HEALTH_ENABLED: true
-      KC_OPTIMIZED_BUILD: true # Auto-build optimized server on startup (useful for 'start-dev' too)
+      KC_OPTIMIZED_BUILD: true
     ports:
-      - "7000:8080" # Map Keycloak's internal port to the host
+      - "7000:8080"
     depends_on:
       keycloak-db:
-        condition: service_healthy # Ensure database is healthy before Keycloak starts
+        condition: service_healthy
     networks:
       - app-network
     restart: unless-stopped
 
-  # PostgreSQL Database for Keycloak
   keycloak-db:
-    image: postgres # Using a specific version for stability
+    image: postgres
     container_name: keycloak-db
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
-      - "${POSTGRES_DATA_PATH}:/var/lib/postgresql/data" # Persist database data
+      - "${POSTGRES_DATA_PATH}:/var/lib/postgresql/data"
     networks:
       - app-network
     healthcheck:
@@ -50,5 +47,5 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 30s # Give DB time to initialize and create user
+      start_period: 30s
     restart: unless-stopped
