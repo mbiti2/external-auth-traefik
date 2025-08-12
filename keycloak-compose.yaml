@@ -17,7 +17,8 @@ services:
       KC_DB_URL_DATABASE: ${POSTGRES_DB}
       KC_DB_USERNAME: ${POSTGRES_USER}
       KC_DB_PASSWORD: ${POSTGRES_PASSWORD}
-      KC_HOSTNAME: keycloak # Internal service name for internal communication
+      KC_HOSTNAME_URL: http://10.216.68.222:7000 
+      KC_PROXY_HEADERS: forwarded # Internal service name for internal communication
       KC_HTTP_ENABLED: true
       KC_HEALTH_ENABLED: true
       KC_OPTIMIZED_BUILD: true # Auto-build optimized server on startup (useful for 'start-dev' too)
