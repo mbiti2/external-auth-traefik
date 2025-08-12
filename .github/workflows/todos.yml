@@ -1,4 +1,4 @@
-name: automated package push for backend
+name: automated package push
 
 on:
   push:
@@ -6,30 +6,30 @@ on:
       - main
 
 env:
-  IMAGE_NAME: todo-service 
+  IMAGE_NAME: todos-service
   IMAGE_PATH: mbiti2
 
 jobs:
   build:
     runs-on: ubuntu-22.04
     permissions:
+      contents: read
       packages: write
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: login to container registry
-        uses: docker/login-action@v2
+      - name: Log in to container registry
+        uses: docker/login-action@v3
         with:
-            registry: ghcr.io
-            username: ${{ github.actor }}
-            password: ${{ secrets.GITHUB_TOKEN }}
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build project
-        uses: docker/build-push-action@v4
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
         with:
           context: ./display-todos-service
           push: true
-          tags: |
-            ghcr.io/${{ env.IMAGE_PATH }}/${{ env.IMAGE_NAME }}:latest
+          tags: ghcr.io/${{ env.IMAGE_PATH }}/${{ env.IMAGE_NAME }}:latest
