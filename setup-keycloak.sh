@@ -14,9 +14,9 @@ fi
 # Validate required environment variables
 : "${KEYCLOAK_CONTAINER_NAME:?Error: KEYCLOAK_CONTAINER_NAME not set}"
 : "${KEYCLOAK_URL:?Error: KEYCLOAK_URL not set}"
-: "${ADMIN_USER:?Error: ADMIN_USER not set}"
-: "${ADMIN_PASS:?Error: ADMIN_PASS not set}"
-: "${REALM_NAME:?Error: REALM_NAME not set}"
+: "${KEYCLOAK_ADMIN_USER:?Error: KEYCLOAK_ADMIN_USER not set}"
+: "${KEYCLOAK_ADMIN_PASSWORD:?Error: KEYCLOAK_ADMIN_PASSWORD not set}"
+: "${KEYCLOAK_REALM_NAME:?Error: KEYCLOAK_REALM_NAME not set}"
 : "${CLIENT_ID:?Error: CLIENT_ID not set}"
 : "${CLIENT_SECRET:?Error: CLIENT_SECRET not set}"
 : "${REDIRECT_URIS:?Error: REDIRECT_URIS not set}"
@@ -31,7 +31,7 @@ kc() {
 # Wait for Keycloak to be ready (checks serverinfo endpoint inside container)
 echo "Waiting for Keycloak to be ready..."
 for i in {1..24}; do
-    if kc get serverinfo --server http://localhost:8080 --realm master --user "$ADMIN_USER" --password "$ADMIN_PASS" >/dev/null 2>&1; then
+    if kc get serverinfo --server http://localhost:8080 --realm master --user "$KEYCLOAK_ADMIN_USER" --password "$KEYCLOAK_ADMIN_PASSWORD" >/dev/null 2>&1; then
         echo "Keycloak is ready!"
         break
     fi
@@ -46,42 +46,42 @@ done
 
 echo "Logging in as Keycloak admin..."
 kc config credentials --server http://localhost:8080 --realm master \
-  --user "$ADMIN_USER" --password "$ADMIN_PASS"
+  --user "$KEYCLOAK_ADMIN_USER" --password "$KEYCLOAK_ADMIN_PASSWORD"
 
-echo "Creating realm: $REALM_NAME..."
-if ! kc get realms/$REALM_NAME >/dev/null 2>&1; then
-  kc create realms -s realm="$REALM_NAME" -s enabled=true
+echo "Creating realm: $KEYCLOAK_REALM_NAME..."
+if ! kc get realms/$KEYCLOAK_REALM_NAME >/dev/null 2>&1; then
+  kc create realms -s realm="$KEYCLOAK_REALM_NAME" -s enabled=true
 else
-  echo "Realm $REALM_NAME already exists."
+  echo "Realm $KEYCLOAK_REALM_NAME already exists."
 fi
 
 echo "Creating client: $CLIENT_ID..."
-if ! kc get clients -r "$REALM_NAME" --fields clientId | grep -q "\"$CLIENT_ID\""; then
-  kc create clients -r "$REALM_NAME" \
+if ! kc get clients -r "$KEYCLOAK_REALM_NAME" --fields clientId | grep -q "\"$CLIENT_ID\""; then
+  kc create clients -r "$KEYCLOAK_REALM_NAME" \
     -s clientId="$CLIENT_ID" \
     -s enabled=true \
     -s publicClient=false \
     -s "redirectUris=[\"$REDIRECT_URIS\"]" \
     -s directAccessGrantsEnabled=true
   # Now set secret after creation
-  CLIENT_UUID=$(kc get clients -r "$REALM_NAME" -q clientId="$CLIENT_ID" --fields id | grep '"id"' | sed 's/.*"id" : "\([^"]*\)".*/\1/')
-  kc update clients/$CLIENT_UUID -r "$REALM_NAME" -s secret="$CLIENT_SECRET"
+  CLIENT_UUID=$(kc get clients -r "$KEYCLOAK_REALM_NAME" -q clientId="$CLIENT_ID" --fields id | grep '"id"' | sed 's/.*"id" : "\([^"]*\)".*/\1/')
+  kc update clients/$CLIENT_UUID -r "$KEYCLOAK_REALM_NAME" -s secret="$CLIENT_SECRET"
 else
   echo "Client $CLIENT_ID already exists."
 fi
 
 echo "Creating test user..."
-if ! kc get users -r "$REALM_NAME" -q username="$TEST_USER" | grep -q "$TEST_USER"; then
-  kc create users -r "$REALM_NAME" \
+if ! kc get users -r "$KEYCLOAK_REALM_NAME" -q username="$TEST_USER" | grep -q "$TEST_USER"; then
+  kc create users -r "$KEYCLOAK_REALM_NAME" \
     -s username="$TEST_USER" \
     -s enabled=true \
     -s emailVerified=true \
     -s email="$TEST_USER@example.com"
   echo "Setting password for new user $TEST_USER..."
-  USER_ID=$(kc get users -r "$REALM_NAME" -q username="$TEST_USER" --fields id | grep '"id"' | sed 's/.*"id" : "\([^"]*\)".*/\1/')
-  kc set-password -r "$REALM_NAME" --userid "$USER_ID" --new-password "$TEST_PASS"
+  USER_ID=$(kc get users -r "$KEYCLOAK_REALM_NAME" -q username="$TEST_USER" --fields id | grep '"id"' | sed 's/.*"id" : "\([^"]*\)".*/\1/')
+  kc set-password -r "$KEYCLOAK_REALM_NAME" --userid "$USER_ID" --new-password "$TEST_PASS"
   # Ensure user is fully set up - update all required fields
-  kc update users/"$USER_ID" -r "$REALM_NAME" \
+  kc update users/"$USER_ID" -r "$KEYCLOAK_REALM_NAME" \
     -s emailVerified=true \
     -s enabled=true \
     -s firstName="Test" \
@@ -89,10 +89,10 @@ if ! kc get users -r "$REALM_NAME" -q username="$TEST_USER" | grep -q "$TEST_USE
 else
   echo "User $TEST_USER already exists."
   echo "Resetting password for $TEST_USER..."
-  USER_ID=$(kc get users -r "$REALM_NAME" -q username="$TEST_USER" --fields id | grep '"id"' | sed 's/.*"id" : "\([^"]*\)".*/\1/')
-  kc set-password -r "$REALM_NAME" --userid "$USER_ID" --new-password "$TEST_PASS"
+  USER_ID=$(kc get users -r "$KEYCLOAK_REALM_NAME" -q username="$TEST_USER" --fields id | grep '"id"' | sed 's/.*"id" : "\([^"]*\)".*/\1/')
+  kc set-password -r "$KEYCLOAK_REALM_NAME" --userid "$USER_ID" --new-password "$TEST_PASS"
   # Ensure user is fully set up - update all required fields
-  kc update users/"$USER_ID" -r "$REALM_NAME" \
+  kc update users/"$USER_ID" -r "$KEYCLOAK_REALM_NAME" \
     -s emailVerified=true \
     -s enabled=true \
     -s firstName="Test" \
