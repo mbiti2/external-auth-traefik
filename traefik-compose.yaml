@@ -65,7 +65,7 @@ services:
     restart: unless-stopped
 
   home-service:
-    build: ./nginx-homepage
+    image: your-home-service-image
     container_name: home-service
     labels:
       - "traefik.enable=true"
