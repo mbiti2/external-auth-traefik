@@ -27,6 +27,8 @@ async fn main() {
     let posts: Arc<Vec<String>> = Arc::new(vec![
         "Post 1: Hello World".to_string(),
         "Post 2: Rust is Great".to_string(),
+        "Post 3: Oauth2-Proxy".to_string(),
+        "Post 4: Traefik".to_string(),
     ]);
 
     let app = Router::new()

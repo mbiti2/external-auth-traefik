@@ -26,8 +26,9 @@ async fn main() {
 
     let foods: Arc<Vec<String>> = Arc::new(vec![
         "Pizza".to_string(),
-        "Sushi".to_string(),
-        "Burger".to_string(),
+        "Meat".to_string(),
+        "Eru".to_string(),
+        "Koki".to_string(),
     ]);
 
     let app = Router::new()

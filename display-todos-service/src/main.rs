@@ -51,7 +51,7 @@ async fn add_todo(
         completed: false,
     };
     todos.push(todo);
-    Redirect::to("/todos")
+    Redirect::to("/")
 }
 
 #[axum::debug_handler]
@@ -63,7 +63,7 @@ async fn toggle_todo(
     if let Some(todo) = todos.iter_mut().find(|t| t.id == id) {
         todo.completed = !todo.completed;
     }
-    Redirect::to("/todos")
+    Redirect::to("/")
 }
 
 #[axum::debug_handler]
@@ -73,7 +73,7 @@ async fn delete_todo(
 ) -> impl IntoResponse {
     let mut todos = todos.lock().await;
     todos.retain(|t| t.id != id);
-    Redirect::to("/todos")
+    Redirect::to("/")
 }
 
 #[tokio::main]

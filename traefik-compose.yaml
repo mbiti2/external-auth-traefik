@@ -86,9 +86,9 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.post-service.entrypoints=web"
-      - "traefik.http.routers.post-service.rule=Host(`10.216.68.222`) && PathPrefix(`/service1/`)"
-      - "traefik.http.routers.post-service.middlewares=service1-stripprefix@file"
-      - "traefik.http.services.post-service.loadbalancer.server.port=3001"
+      - "traefik.http.routers.post-service.rule=Host(`10.216.68.222`) && PathPrefix(`/service1`)"
+      - "traefik.http.routers.post-service.middlewares=service1-stripprefix@file,oauth2-proxy-auth@file"
+      - "traefik.http.services.post-service.loadbalancer.server.port=3002"
     networks:
       - myproject_app-network
     restart: unless-stopped
@@ -99,8 +99,8 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.todos-service.entrypoints=web"
-      - "traefik.http.routers.todos-service.rule=Host(`10.216.68.222`) && PathPrefix(`/service2/`)"
-      - "traefik.http.routers.todos-service.middlewares=service2-stripprefix@file"
+      - "traefik.http.routers.todos-service.rule=Host(`10.216.68.222`) && PathPrefix(`/service2`)"
+      - "traefik.http.routers.todos-service.middlewares=service2-stripprefix@file,oauth2-proxy-auth@file"
       - "traefik.http.services.todos-service.loadbalancer.server.port=3003"
     networks:
       - myproject_app-network
@@ -111,10 +111,10 @@ services:
     container_name: food-service
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.food-service.rule=Host(`10.216.68.222`) && PathPrefix(`/service3/`)"
-      - "traefik.http.routers.food-service.middlewares=service3-stripprefix@file"
+      - "traefik.http.routers.food-service.rule=Host(`10.216.68.222`) && PathPrefix(`/service3`)"
+      - "traefik.http.routers.food-service.middlewares=service3-stripprefix@file,oauth2-proxy-auth@file"
       - "traefik.http.routers.food-service.entrypoints=web"
-      - "traefik.http.services.food-service.loadbalancer.server.port=3002"
+      - "traefik.http.services.food-service.loadbalancer.server.port=3001"
     networks:
       - myproject_app-network
     restart: unless-stopped
