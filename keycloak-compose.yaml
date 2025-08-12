@@ -20,7 +20,6 @@ services:
       KC_HOSTNAME_URL: http://10.216.68.222:7000
       KC_PROXY_HEADERS: forwarded
       KC_HTTP_ENABLED: true
-      KC_HEALTH_ENABLED: true
       KC_OPTIMIZED_BUILD: true
     ports:
       - "7000:8080"
