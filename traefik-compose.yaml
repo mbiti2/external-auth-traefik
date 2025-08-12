@@ -13,20 +13,21 @@ services:
       - "--entryPoints.web.forwardedHeaders.insecure=true"
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
+      - "--providers.file=true"
+      - "--providers.file.directory=/etc/traefik/dynamic_config"
+      - "--providers.file.watch=true"
     ports:
       - "${TRAEFIK_HTTP_PORT}:${TRAEFIK_HTTP_PORT}"
       - "${TRAEFIK_DASHBOARD_PORT}:${TRAEFIK_DASHBOARD_PORT}"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "./traefik-config:/etc/traefik/dynamic_config:ro"
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.traefik.rule=PathPrefix(`/traefik`) || HeadersRegexp(`Referer`, `.*/traefik/.*`)"
+      - "traefik.http.routers.traefik.rule=Host(`10.216.68.222`) && (PathPrefix(`/traefik`) || PathPrefix(`/api`))"
       - "traefik.http.routers.traefik.service=api@internal"
+      - "traefik.http.routers.traefik.middlewares=traefik-stripprefix"
       - "traefik.http.middlewares.traefik-stripprefix.stripprefix.prefixes=/traefik"
-      - "traefik.http.middlewares.oauth2-proxy-auth.forwardauth.address=http://oauth2-proxy:4180/oauth2/auth"
-      - "traefik.http.middlewares.oauth2-proxy-auth.forwardauth.authResponseHeaders=Authorization,X-Auth-Request-Email,X-Auth-Request-User"
-      - "traefik.http.middlewares.oauth2-proxy-auth.forwardauth.trustForwardHeader=true"
-      - "traefik.http.middlewares.oauth2-proxy-auth.forwardauth.authURL=http://10.216.68.222:${TRAEFIK_HTTP_PORT}/oauth2/start"
     networks:
       - myproject_app-network
     restart: unless-stopped
@@ -45,19 +46,22 @@ services:
       - OAUTH2_PROXY_REDIRECT_URL=http://10.216.68.222:${TRAEFIK_HTTP_PORT}/oauth2/callback
       - OAUTH2_PROXY_COOKIE_SECURE=false
       - OAUTH2_PROXY_INSECURE_OIDC_ALLOW_UNVERIFIED_EMAIL=true
-      - OAUTH2_PROXY_UPSTREAM=http://rust-service-1:3001
       - OAUTH2_PROXY_HTTP_ADDRESS=http://0.0.0.0:4180
       - OAUTH2_PROXY_SET_AUTHORIZATION_HEADER=true
       - OAUTH2_PROXY_SET_XAUTHREQUEST=true
       - OAUTH2_PROXY_SHOW_DEBUG_ON_ERROR=true
-      - OAUTH2_PROXY_WHITELIST_DOMAINS=10.216.68.222:8088
+      - OAUTH2_PROXY_PASS_ACCESS_TOKEN=true
+      - OAUTH2_PROXY_SKIP_PROVIDER_BUTTONS=true
+      # - OAUTH2_PROXY_PROVIDER_BUTTONS={"oidc": "Log in with OIDC"}
+      - OAUTH2_PROXY_UPSTREAMS=http://entry-service:80
+      # - OAUTH2_PROXY_WHITELIST_DOMAINS=10.216.68.222:8088
       - OAUTH2_PROXY_AUTH_URL=http://10.216.68.222:7000/realms/test-realm/protocol/openid-connect/auth
     command:
       - --http-address=0.0.0.0:4180
-      - --upstream=http://rust-service-1:3001
+      - --cookie-secure=false
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.oauth2-proxy-router.rule=PathPrefix(`/oauth2`)"
+      - "traefik.http.routers.oauth2-proxy-router.rule=Host(`10.216.68.222`) && (PathPrefix(`/oauth2`) || PathPrefix(`/oauth2/`))"
       - "traefik.http.routers.oauth2-proxy-router.entrypoints=web"
       - "traefik.http.services.oauth2-proxy.loadbalancer.server.port=4180"
     networks:
@@ -69,8 +73,10 @@ services:
     container_name: entry-service
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.entry-service.rule=Host(`10.216.68.222`)"
+      - "traefik.http.routers.entry-service.rule=Host(`10.216.68.222`) && Path(`/`)"
+
       - "traefik.http.routers.entry-service.entrypoints=web"
+      - "traefik.http.routers.entry-service.middlewares=oauth2-proxy-auth@file"
       - "traefik.http.services.entry-service.loadbalancer.server.port=80"
     networks:
       - myproject_app-network
@@ -81,9 +87,9 @@ services:
     container_name: post-service
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.post-service.rule=Host(`10.216.68.222`) && PathPrefix(`/service1`)"
+      - "traefik.http.routers.post-service.rule=Host(`10.216.68.222`) && (PathPrefix(`/service1/`) || PathPrefix(`/service1`))"
       - "traefik.http.routers.post-service.entrypoints=web"
-      - "traefik.http.routers.post-service.middlewares=oauth2-proxy-auth@docker"
+      - "traefik.http.routers.post-service.middlewares=service1-stripprefix@file"
       - "traefik.http.services.post-service.loadbalancer.server.port=3001"
     networks:
       - myproject_app-network
@@ -94,10 +100,10 @@ services:
     container_name: todos-service
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.todos-service.rule=Host(`10.216.68.222`) && PathPrefix(`/service2`)"
+      - "traefik.http.routers.todos-service.rule=Host(`10.216.68.222`) && (PathPrefix(`/service2/`) || PathPrefix(`/service2`))"
       - "traefik.http.routers.todos-service.entrypoints=web"
-      - "traefik.http.routers.todos-service.middlewares=oauth2-proxy-auth@docker"
-      - "traefik.http.services.todos-service.loadbalancer.server.port=3002"
+      - "traefik.http.routers.todos-service.middlewares=service2-stripprefix@file"
+      - "traefik.http.services.todos-service.loadbalancer.server.port=3003"
     networks:
       - myproject_app-network
     restart: unless-stopped
@@ -107,10 +113,10 @@ services:
     container_name: food-service
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.food-service.rule=Host(`10.216.68.222`) && PathPrefix(`/service3`)"
+      - "traefik.http.routers.food-service.rule=Host(`10.216.68.222`) && (PathPrefix(`/service3/`) || PathPrefix(`/service3`))"
       - "traefik.http.routers.food-service.entrypoints=web"
-      - "traefik.http.routers.food-service.middlewares=oauth2-proxy-auth@docker"
-      - "traefik.http.services.food-service.loadbalancer.server.port=3003"
+      - "traefik.http.routers.food-service.middlewares=service3-stripprefix@file"
+      - "traefik.http.services.food-service.loadbalancer.server.port=3002"
     networks:
       - myproject_app-network
     restart: unless-stopped
