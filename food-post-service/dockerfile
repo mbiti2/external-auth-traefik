@@ -1,0 +1,15 @@
+FROM rust:1.80-slim
+
+WORKDIR /app
+
+# Copy all project files
+COPY . .
+
+# Build release binary
+RUN cargo build --release
+
+# Expose the port your app listens on
+EXPOSE 3001
+
+# Run the binary
+CMD ["./target/release/display-food"]
