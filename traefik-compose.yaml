@@ -1,0 +1,94 @@
+
+networks:
+  myproject_app-network:
+    external: true # This network is created externally by keycloak-compose.yaml
+
+services:
+
+  # Traefik Reverse Proxy and Load Balancer
+  traefik:
+    image: traefik:v${TRAEFIK_VERSION}
+    container_name: traefik
+    command:
+      - "--log.level=DEBUG"
+      - "--api.insecure=true"
+      - "--entrypoints.web.address=:${TRAEFIK_HTTP_PORT}"
+      - "--entryPoints.web.forwardedHeaders.insecure"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+    ports:
+      - "${TRAEFIK_HTTP_PORT}:${TRAEFIK_HTTP_PORT}"
+      - "${TRAEFIK_DASHBOARD_PORT}:${TRAEFIK_DASHBOARD_PORT}" # Dashboard on 8080 or specified TRAEFIK_DASHBOARD_PORT
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    labels:
+      - "traefik.enable=true"
+      # Route for Traefik Dashboard (access via /traefik path)
+      - "traefik.http.routers.traefik.rule=PathPrefix(`/traefik`) || HeadersRegexp(`Referer`, `.*/traefik/.*`)"
+      - "traefik.http.routers.traefik.service=api@internal"
+      - "traefik.http.routers.traefik.middlewares=traefik-stripprefix"
+      - "traefik.http.middlewares.traefik-stripprefix.stripprefix.prefixes=/traefik"
+    networks:
+      - myproject_app-network
+    restart: unless-stopped
+
+  # OAuth2-Proxy: Handles authentication flow with Keycloak
+  oauth2-proxy:
+    image: quay.io/oauth2-proxy/oauth2-proxy:latest
+    container_name: oauth2-proxy
+    environment:
+      - OAUTH2_PROXY_PROVIDER=oidc
+      # Correct: Use http and the internal Keycloak service name for OIDC discovery
+      - OAUTH2_PROXY_OIDC_ISSUER_URL=http://keycloak:8080/realms/${KEYCLOAK_REALM_NAME}
+      - OAUTH2_PROXY_CLIENT_ID=${OAUTH2_PROXY_CLIENT_ID}
+      - OAUTH2_PROXY_CLIENT_SECRET=${OAUTH2_PROXY_CLIENT_SECRET}
+      # Correct: Secret is now unquoted and should be 32 chars from .env
+      - OAUTH2_PROXY_COOKIE_SECRET=${OAUTH2_PROXY_COOKIE_SECRET}
+      - OAUTH2_PROXY_EMAIL_DOMAINS=${OAUTH2_PROXY_EMAIL_DOMAINS}
+      - OAUTH2_PROXY_REVERSE_PROXY=true
+      # Correct: This URL should match the external access point for your app (browser-facing)
+      - OAUTH2_PROXY_REDIRECT_URL=http://10.216.68.222:${TRAEFIK_HTTP_PORT}/oauth2/callback
+      - OAUTH2_PROXY_COOKIE_SECURE=false
+      - OAUTH2_PROXY_INSECURE_OIDC_ALLOW_UNVERIFIED_EMAIL=true
+      - OAUTH2_PROXY_UPSTREAM=http://echo-server:80 # Points to the echo-server service internally
+      - OAUTH2_PROXY_HTTP_ADDRESS=http://0.0.0.0:4180
+      - OAUTH2_PROXY_SET_AUTHORIZATION_HEADER=true
+      - OAUTH2_PROXY_SET_XAUTHREQUEST=true
+      - OUATH2_PROXY_SHOW_DEBUG_ON_ERROR=true
+      # Correct: Explicitly set the public Keycloak Authorization URL for browser redirects
+      - OAUTH2_PROXY_AUTH_URL=http://10.216.68.222:7000/realms/${KEYCLOAK_REALM_NAME}/protocol/openid-connect/auth
+    command: # Command-line arguments override environment variables if both are present
+      - --http-address=0.0.0.0:4180
+      - --upstream=http://echo-server:80
+    labels:
+      - "traefik.enable=true"
+      # ADDED: This is a router for the oauth2-proxy itself, often overlooked.
+      # It ensures Traefik recognizes the service and its entrypoints.
+      - "traefik.http.routers.oauth2-proxy-router.rule=PathPrefix(`/oauth2`)"
+      - "traefik.http.routers.oauth2-proxy-router.entrypoints=web"
+      - "traefik.http.services.oauth2-proxy.loadbalancer.server.port=4180"
+      # Define a forwardauth middleware using labels on this service
+      # This middleware will be used by other services (like echo-server)
+      - "traefik.http.middlewares.oauth2-proxy-auth.forwardauth.address=http://oauth2-proxy:4180"
+      - "traefik.http.middlewares.oauth2-proxy-auth.forwardauth.authResponseHeaders=Authorization,X-Auth-Request-Email,X-Auth-Request-User"
+      - "traefik.http.middlewares.oauth2-proxy-auth.forwardauth.trustForwardHeader=true"
+    networks:
+      - myproject_app-network
+    restart: unless-stopped
+
+  # Echo Server: Simple application to be protected by OAuth2-Proxy
+  echo-server:
+    image: ealen/echo-server
+    container_name: echo-server
+    labels:
+      - "traefik.enable=true"
+      # Router rule: Catches all traffic not handled by other routers (e.g., Traefik dashboard)
+      # Access via http://localhost:${TRAEFIK_HTTP_PORT}/
+      - "traefik.http.routers.echo-server.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.echo-server.entrypoints=web"
+      # Apply the OAuth2-Proxy authentication middleware defined above
+      - "traefik.http.routers.echo-server.middlewares=oauth2-proxy-auth@docker"
+      - "traefik.http.services.echo-server.loadbalancer.server.port=80"
+    networks:
+      - myproject_app-network
+    restart: unless-stopped
