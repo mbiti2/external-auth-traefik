@@ -1,1 +1,4 @@
 .env
+display-post-service/target/
+display-todos-service/target/
+food-post-service/target/
