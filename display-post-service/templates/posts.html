@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Posts List</title>
+    <script src="https://unpkg.com/htmx.org@2.0.6"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <style>
+      :root {
+        --bg: #0f172a;
+        --panel: #111827;
+        --muted: #94a3b8;
+        --text: #e2e8f0;
+        --accent: #3b82f6;
+        --accent-2: #22c55e;
+        --danger: #ef4444;
+      }
+      html, body { height: 100%; }
+      body {
+        margin: 0;
+        background: linear-gradient(180deg, #0b1220 0%, #0f172a 100%);
+        color: var(--text);
+        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica Neue, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      }
+      .container {
+        max-width: 720px;
+        margin: 40px auto;
+        padding: 24px;
+        background: rgba(17, 24, 39, 0.8);
+        backdrop-filter: blur(6px);
+        border: 1px solid rgba(148, 163, 184, 0.2);
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+      }
+      .header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 18px;
+      }
+      h1 {
+        margin: 0;
+        font-size: 24px;
+        letter-spacing: 0.3px;
+      }
+      .post-block {
+        display: block; /* Ensure block-level display */
+        margin: 15px 0;
+        padding: 15px;
+        border-radius: 10px;
+        background-color: #0b1220;
+        border: 1px solid rgba(148, 163, 184, 0.18);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        transition: all 0.2s ease;
+      }
+      .post-block:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+      }
+      .post-title {
+        color: var(--text);
+        font-size: 16px;
+        margin: 0 0 8px 0;
+        word-wrap: break-word;
+      }
+      .btn {
+        padding: 8px 14px;
+        border: 1px solid rgba(148,163,184,0.25);
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        background: #0b1220;
+        color: var(--text);
+        transition: all 0.15s ease;
+      }
+      .btn:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(0,0,0,0.35); }
+      .btn-toggle {
+        background-color: #0b1220;
+        color: var(--accent-2);
+      }
+      .btn-toggle:hover {
+        background-color: #0e172a;
+      }
+      .btn-delete {
+        background-color: #0b1220;
+        color: var(--danger);
+      }
+      .btn-delete:hover {
+        background-color: #0e172a;
+      }
+      .btn-login {
+        background-color: #0b1220;
+        color: var(--accent);
+        margin-left: 10px;
+      }
+      .btn-logout {
+        background-color: #0b1220;
+        color: var(--muted);
+      }
+      .add-form {
+        margin: 8px 0 16px;
+        display: flex;
+        gap: 10px;
+      }
+      .add-input {
+        flex: 1;
+        padding: 12px;
+        border: 1px solid rgba(148,163,184,0.25);
+        border-radius: 10px;
+        background: #0b1220;
+        color: var(--text);
+      }
+      .btn-add {
+        background-color: #0b1220;
+        color: var(--accent);
+        padding: 10px 16px;
+      }
+      ul { margin: 0; padding: 0; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>Posts List</h1>
+      </div>
+      {% for post in posts %}
+        <div class="post-block">
+          <p class="post-title">{{ post }}</p>
+        </div>
+      {% endfor %}
+    </div>
+  </body>
+</html>
