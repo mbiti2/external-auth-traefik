@@ -30,6 +30,6 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: ./display-posts-service
+          context: ./display-post-service
           push: true
           tags: ghcr.io/${{ env.IMAGE_PATH }}/${{ env.IMAGE_NAME }}:latest
