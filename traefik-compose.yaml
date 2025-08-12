@@ -23,6 +23,10 @@ services:
       - "traefik.http.routers.traefik.rule=PathPrefix(`/traefik`) || HeadersRegexp(`Referer`, `.*/traefik/.*`)"
       - "traefik.http.routers.traefik.service=api@internal"
       - "traefik.http.middlewares.traefik-stripprefix.stripprefix.prefixes=/traefik"
+      - "traefik.http.middlewares.oauth2-proxy-auth.forwardauth.address=http://oauth2-proxy:4180/oauth2/auth"
+      - "traefik.http.middlewares.oauth2-proxy-auth.forwardauth.authResponseHeaders=Authorization,X-Auth-Request-Email,X-Auth-Request-User"
+      - "traefik.http.middlewares.oauth2-proxy-auth.forwardauth.trustForwardHeader=true"
+      - "traefik.http.middlewares.oauth2-proxy-auth.forwardauth.authURL=http://10.216.68.222:${TRAEFIK_HTTP_PORT}/oauth2/start"
     networks:
       - myproject_app-network
     restart: unless-stopped
@@ -56,10 +60,6 @@ services:
       - "traefik.http.routers.oauth2-proxy-router.rule=PathPrefix(`/oauth2`)"
       - "traefik.http.routers.oauth2-proxy-router.entrypoints=web"
       - "traefik.http.services.oauth2-proxy.loadbalancer.server.port=4180"
-      - "traefik.http.middlewares.oauth2-proxy-auth.forwardauth.address=http://oauth2-proxy:4180/oauth2/auth"
-      - "traefik.http.middlewares.oauth2-proxy-auth.forwardauth.authResponseHeaders=Authorization,X-Auth-Request-Email,X-Auth-Request-User"
-      - "traefik.http.middlewares.oauth2-proxy-auth.forwardauth.trustForwardHeader=true"
-      - "traefik.http.middlewares.oauth2-proxy-auth.forwardauth.authURL=http://10.216.68.222:${TRAEFIK_HTTP_PORT}/oauth2/start"
     networks:
       - myproject_app-network
     restart: unless-stopped
