@@ -64,53 +64,53 @@ services:
       - myproject_app-network
     restart: unless-stopped
 
-  home-service:
-    image: your-home-service-image
-    container_name: home-service
+  entry-service:
+    image: ghcr.io/mbiti2/entry-service:latest
+    container_name: entry-service
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.home-service.rule=Host(`10.216.68.222`)"
-      - "traefik.http.routers.home-service.entrypoints=web"
-      - "traefik.http.services.home-service.loadbalancer.server.port=80"
+      - "traefik.http.routers.entry-service.rule=Host(`10.216.68.222`)"
+      - "traefik.http.routers.entry-service.entrypoints=web"
+      - "traefik.http.services.entry-service.loadbalancer.server.port=80"
     networks:
       - myproject_app-network
     restart: unless-stopped
 
-  rust-service-1:
-    image: your-rust-service-image-1
-    container_name: rust-service-1
+  post-service:
+    image: ghcr.io/mbiti2/posts-service:latest
+    container_name: post-service
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.rust-service-1.rule=Host(`10.216.68.222`) && PathPrefix(`/service1`)"
-      - "traefik.http.routers.rust-service-1.entrypoints=web"
-      - "traefik.http.routers.rust-service-1.middlewares=oauth2-proxy-auth@docker"
-      - "traefik.http.services.rust-service-1.loadbalancer.server.port=3001"
+      - "traefik.http.routers.post-service.rule=Host(`10.216.68.222`) && PathPrefix(`/service1`)"
+      - "traefik.http.routers.post-service.entrypoints=web"
+      - "traefik.http.routers.post-service.middlewares=oauth2-proxy-auth@docker"
+      - "traefik.http.services.post-service.loadbalancer.server.port=3001"
     networks:
       - myproject_app-network
     restart: unless-stopped
 
-  rust-service-2:
-    image: your-rust-service-image-2
-    container_name: rust-service-2
+  todos-service:
+    image: ghcr.io/mbiti2/todos-service:latest
+    container_name: todos-service
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.rust-service-2.rule=Host(`10.216.68.222`) && PathPrefix(`/service2`)"
-      - "traefik.http.routers.rust-service-2.entrypoints=web"
-      - "traefik.http.routers.rust-service-2.middlewares=oauth2-proxy-auth@docker"
-      - "traefik.http.services.rust-service-2.loadbalancer.server.port=3002"
+      - "traefik.http.routers.todos-service.rule=Host(`10.216.68.222`) && PathPrefix(`/service2`)"
+      - "traefik.http.routers.todos-service.entrypoints=web"
+      - "traefik.http.routers.todos-service.middlewares=oauth2-proxy-auth@docker"
+      - "traefik.http.services.todos-service.loadbalancer.server.port=3002"
     networks:
       - myproject_app-network
     restart: unless-stopped
 
-  rust-service-3:
-    image: your-rust-service-image-3
-    container_name: rust-service-3
+  food-service:
+    image: ghcr.io/mbiti2/food-service:latest
+    container_name: food-service
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.rust-service-3.rule=Host(`10.216.68.222`) && PathPrefix(`/service3`)"
-      - "traefik.http.routers.rust-service-3.entrypoints=web"
-      - "traefik.http.routers.rust-service-3.middlewares=oauth2-proxy-auth@docker"
-      - "traefik.http.services.rust-service-3.loadbalancer.server.port=3003"
+      - "traefik.http.routers.food-service.rule=Host(`10.216.68.222`) && PathPrefix(`/service3`)"
+      - "traefik.http.routers.food-service.entrypoints=web"
+      - "traefik.http.routers.food-service.middlewares=oauth2-proxy-auth@docker"
+      - "traefik.http.services.food-service.loadbalancer.server.port=3003"
     networks:
       - myproject_app-network
     restart: unless-stopped
