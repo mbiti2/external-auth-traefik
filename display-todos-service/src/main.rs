@@ -83,7 +83,7 @@ async fn main() {
     let todos: TodoList = Arc::new(Mutex::new(Vec::new()));
 
     let app = Router::new()
-        .route("/todos", get(index))
+        .route("/", get(index))
         .route("/add", post(add_todo))
         .route("/toggle/:id", post(toggle_todo))
         .route("/delete/:id", post(delete_todo))

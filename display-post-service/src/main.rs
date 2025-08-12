@@ -7,7 +7,6 @@ use axum::{
 use askama::Template;
 use std::net::SocketAddr;
 use std::sync::Arc;
-use tracing;
 use tracing_subscriber;
 
 #[derive(Template)]
@@ -31,7 +30,7 @@ async fn main() {
     ]);
 
     let app = Router::new()
-        .route("/posts", get(display_posts))
+        .route("/", get(display_posts))
         .with_state(posts);
 
     let addr = SocketAddr::from(([0, 0, 0, 0], 3002));
